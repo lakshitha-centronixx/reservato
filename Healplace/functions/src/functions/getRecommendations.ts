@@ -2,6 +2,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { LangchainService } from "../services/langchain-service";
 import { ISystemPromptInstructions } from "../helpers/interfaces";
+import { RecommendationResponse } from "../llm/schema/recommendation-schema";
 
 export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req, res) => {
 
@@ -19,12 +20,19 @@ export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req,
         return;
     }
 
-    const { sessionId, prompt, medicalLens, tone, detailLevel, careApproach, spirituality } = req.body;
+    const { date, sessionId, prompt, medicalLens, tone, detailLevel, careApproach, spirituality } = req.body;
 
-    if (!sessionId || !prompt || !medicalLens || !tone || !detailLevel || !careApproach || spirituality === undefined) {
-        res.status(400).json({ error: 'Missing sessionId, prompt, medicalLens, tone, detailLevel, careApproach or spirituality' });
+    if (!date || !sessionId || !prompt || !medicalLens || !tone || !detailLevel || !careApproach || spirituality === undefined) {
+        res.status(400).json({ error: 'Missing date, sessionId, prompt, medicalLens, tone, detailLevel, careApproach or spirituality' });
         return;
     }
+
+    console.log("POST body: " + JSON.stringify(req.body))
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
 
     try {
         console.log("Session " + sessionId);
@@ -37,9 +45,23 @@ export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req,
         console.log("System prompt instructions " + JSON.stringify(systemPromptInstructions));
 
         const langchainService = new LangchainService();
-        const result = await langchainService.getResponse(sessionId, prompt, systemPromptInstructions);
+        const serviceResponse = await langchainService.getResponse(date, sessionId, prompt, systemPromptInstructions);
 
-        res.send({ "data": result });
+        if (typeof serviceResponse === 'object' && serviceResponse !== null && Symbol.asyncIterator in serviceResponse) {
+            const asyncIterator = serviceResponse as AsyncIterable<Partial<RecommendationResponse>>;
+
+            for await (const chunk of asyncIterator) {
+                res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+            }
+
+            res.end();
+        } else {
+            const finalResult = serviceResponse as RecommendationResponse;
+            res.write(`data: ${JSON.stringify(finalResult)}\n\n`);
+            res.end();
+        }
+
+        res.end();
     } catch (error) {
         logger.error("error", error);
         res.status(500).json({ error: 'Internal server error' });

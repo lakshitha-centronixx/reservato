@@ -10,12 +10,12 @@ import { Document } from 'langchain/document';
 import { ISystemPromptInstructions } from '../helpers/interfaces';
 
 export class LangchainService {
-    async getResponse(sessionId: string, query: string, systemPromptInstructions: ISystemPromptInstructions): Promise<RecommendationResponse> {
+    async getResponse(date: string, sessionId: string, query: string, systemPromptInstructions: ISystemPromptInstructions) {
         const llmManager = new LlmManager();
         const pineconeManager = new PineconeManager();
         const embeddingsManager = new EmbeddingsManager();
 
-        const conversationManager = await ConversationManager.create();
+        const conversationManager = await ConversationManager.create(date);
 
         const llm = await llmManager.getRecommendationModel();
         const embeddings = await embeddingsManager.getEmbeddings();
@@ -64,18 +64,32 @@ export class LangchainService {
         ]);
 
         try {
-            const result = await structuredOutputChain.invoke({
-                input: query,
-                chat_history: chatHistory,
+            const stream = structuredOutputChain.stream({
+                input: query
             });
 
-            console.log("Result " + JSON.stringify(result));
+            let fullResult: RecommendationResponse = { text: "" };
 
-            const convertedResult: RecommendationResponse = result.parsed;
+            const processStream = (async function* () {
+                for await (const chunk of await stream) {
+                    if (chunk.text) {
+                        fullResult.text += chunk.text;
+                    }
+                    yield chunk;
+                }
 
-            await conversationManager.saveMemory(sessionId, query, convertedResult.text);
+                console.log("Result " + JSON.stringify(fullResult));
+                await conversationManager.saveMemory(sessionId, query, fullResult.text);
+            })();
 
-            return convertedResult;
+            if (!(Symbol.asyncIterator in processStream)) {
+                console.error("CRITICAL ERROR: processStream is not an AsyncIterable!");
+                return {
+                    text: "An error occurred while getting recommendations"
+                };
+            }
+
+            return processStream;
         } catch (error) {
             console.error("Error getting LLM response:", error);
             return {

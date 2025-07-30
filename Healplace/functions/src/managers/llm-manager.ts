@@ -8,11 +8,12 @@ export class LlmManager {
         this.client = new ChatMistralAI({
             apiKey: process.env.MISTRAL_API_KEY,
             modelName: "mistral-small-2506",
-            maxTokens: 128000
+            maxTokens: 128000,
+            streaming: true
         });
     }
 
     async getRecommendationModel() {
-        return this.client.withStructuredOutput(recommendationSchema, { method: "json_mode", includeRaw: true });
+        return this.client.withStructuredOutput(recommendationSchema, { method: "json_mode" });
     }
 }

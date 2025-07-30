@@ -5,18 +5,18 @@ import { PineconeStore } from "@langchain/pinecone";
 export class ConversationManager {
     private vectorStore!: PineconeStore;
 
-    public static async create(): Promise<ConversationManager> {
+    public static async create(date: string): Promise<ConversationManager> {
         const manager = new ConversationManager();
-        await manager.init();
+        await manager.init(date);
         return manager;
     }
 
-    private async init() {
+    private async init(date: string) {
         const pineconeManager = new PineconeManager();
         const embeddingsManager = new EmbeddingsManager();
 
         const embeddings = await embeddingsManager.getEmbeddings();
-        this.vectorStore = await pineconeManager.getVectorStore(embeddings, "chat_history");
+        this.vectorStore = await pineconeManager.getVectorStore(embeddings, `chat-history-${date}`);
     }
 
     private getVectorStore(): PineconeStore {
