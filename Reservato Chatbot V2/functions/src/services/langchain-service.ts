@@ -10,7 +10,7 @@ import { Document } from 'langchain/document';
 import { formatResponseToString } from '../helpers/format-response';
 
 export class LangchainService {
-    async getResponse(date: string, sessionId: string, query: string): Promise<RecommendationResponse> {
+    async getResponse(date: string, sessionId: string, query: string) {
         const llmManager = new LlmManager();
         const pineconeManager = new PineconeManager();
         const embeddingsManager = new EmbeddingsManager();
@@ -65,17 +65,38 @@ export class LangchainService {
         ]);
 
         try {
-            const result = await structuredOutputChain.invoke({
+            const stream = structuredOutputChain.stream({
                 input: query
             });
 
-            console.log("Result: " + JSON.stringify(result));
+            let fullResult: RecommendationResponse = { text: "", recommendations: [] };
 
-            const formattedAiMessage = formatResponseToString(result);
+            const processStream = (async function* () {
+                for await (const chunk of await stream) {
+                    if (chunk.text) {
+                        fullResult.text += chunk.text;
+                    }
+                    if (chunk.recommendations) {
+                        if (Array.isArray(chunk.recommendations)) {
+                            fullResult.recommendations.push(...chunk.recommendations);
+                        }
+                    }
+                    yield chunk;
+                }
 
-            await conversationManager.saveMemory(sessionId, query, formattedAiMessage);
+                const formattedAiMessage = formatResponseToString(fullResult);
+                await conversationManager.saveMemory(sessionId, query, formattedAiMessage);
+            })();
 
-            return result;
+            if (!(Symbol.asyncIterator in processStream)) {
+                console.error("CRITICAL ERROR: processStream is not an AsyncIterable!");
+                return {
+                    text: "An error occurred while getting recommendations",
+                    recommendations: []
+                };
+            }
+
+            return processStream;
         } catch (error) {
             console.error("Error getting LLM response:", error);
             return {

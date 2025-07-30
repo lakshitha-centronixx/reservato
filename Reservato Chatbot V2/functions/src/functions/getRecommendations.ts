@@ -1,6 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { LangchainService } from "../services/langchain-service";
+import { RecommendationResponse } from "../llm/schema/langchain-recommendation-schema";
 
 export const getRecommendations = onRequest(({ timeoutSeconds: 480 }), async (req, res) => {
 
@@ -27,15 +28,30 @@ export const getRecommendations = onRequest(({ timeoutSeconds: 480 }), async (re
 
     console.log("POST body: " + JSON.stringify(req.body))
 
-    // res.setHeader("Content-Type", "text/event-stream");
-    // res.setHeader("Cache-Control", "no-cache");
-    // res.setHeader("Connection", "keep-alive");
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
 
     try {
         let langchainService = new LangchainService();
-        let result = await langchainService.getResponse(date, sessionId, prompt);
+        let serviceResponse = await langchainService.getResponse(date, sessionId, prompt);
 
-        res.send(result);
+        if (typeof serviceResponse === 'object' && serviceResponse !== null && Symbol.asyncIterator in serviceResponse) {
+            const asyncIterator = serviceResponse as AsyncIterable<Partial<RecommendationResponse>>;
+
+            for await (const chunk of asyncIterator) {
+                res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+            }
+            
+            res.end();
+        } else {
+            const finalResult = serviceResponse as RecommendationResponse;
+            res.write(`data: ${JSON.stringify(finalResult)}\n\n`);
+            res.end();
+        }
+
+        res.end();
     } catch (error) {
         logger.error("error", error);
         res.status(500).json({ error: 'Internal server error' });
