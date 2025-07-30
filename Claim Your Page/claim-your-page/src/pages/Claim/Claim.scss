@@ -1,0 +1,158 @@
+.claim-loader-container {
+  display: flex;
+  height: inherit;
+  justify-content: center;
+  align-items: center;
+}
+
+.claim-error-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: inherit;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+
+  .img {
+    width: 15rem;
+  }
+}
+
+.claim-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem;
+
+  .header {
+    background-image: url('../../assets/images/banner.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 25rem;
+    padding-left: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-direction: column;
+
+    .name {
+      font-size: 4.5rem;
+      font-weight: bold;
+    }
+
+    .description {
+      padding-bottom: 0.8rem;
+      width: 80rem;
+    }
+
+    .location {
+      padding-bottom: 0.8rem;
+      font-weight: bold;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-bottom: 0.8rem;
+
+      .feature {
+        background: #f3f4f6;
+        color: black;
+        border-radius: 1.2rem;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.85rem;
+        border: 1px solid #e5e7eb;
+        font-weight: 500;
+        text-transform: capitalize;
+      }
+    }
+
+    .unclaimed {
+      background: #56ccf2;
+      padding: 0.5rem;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+  }
+
+  .data-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      a {
+        text-decoration: none;
+        padding: 1rem;
+        background: white;
+        color: black;
+        border-radius: 5px;
+        text-align: center;
+        width: 20rem;
+        font-weight: bold;
+      }
+    }
+
+    .photos {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+
+      .photo {
+        width: 13rem;
+        object-fit: cover;
+        border-radius: 0.75rem;
+        border: 1px solid white;
+      }
+    }
+  }
+
+  .hours {
+    .heading {
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
+    }
+
+    .hours-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      font-size: 0.98rem;
+      width: 40rem;
+
+      .day {
+        font-weight: 500;
+      }
+    }
+  }
+
+  .reviews {
+    .heading {
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
+    }
+
+    .review {
+      font-style: italic;
+    }
+  }
+
+  .claim {
+    width: 10rem;
+    height: 3rem;
+    border-radius: 5px;
+    color: white;
+    background: #56ccf2;
+    cursor: pointer;
+  }
+}

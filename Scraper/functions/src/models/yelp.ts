@@ -1,0 +1,43 @@
+export interface YelpData {
+    id: string;
+    name: string;
+    reviewCount: number;
+    categories: string[];
+    rating: number;
+    transactions: string[];
+    location: {};
+    phone: string;
+    display_phone: string;
+    attributes: {
+        businessUrl: string;
+        alcohol: string | null;
+        ambience: {};
+        bike_parking: boolean | null;
+        androidPay: boolean | null;
+        applePay: boolean | null;
+        creditCards: boolean | null;
+        businessParking: {};
+        caters: boolean | null;
+        dogsAllowed: boolean;
+        driveThru: boolean | null;
+        goodForKids: boolean | null;
+        goodForMeal: any;
+        happyHour: boolean | null;
+        hasTv: boolean | null;
+        menuUrl: string;
+        noiseLevel: string | null;
+        open24Hours: boolean | null;
+        platformDelivery: string | null;
+        restaurantsAttire: string;
+        restaurantsDelivery: boolean;
+        restaurantsGoodForGroups: boolean | null;
+        restaurantsReservations: boolean | null;
+        restaurantsTableService: boolean | null;
+        restaurantsTakeOut: boolean;
+        waitlistReservation: boolean | null;
+        wifi: string | null;
+        likedByVegans: boolean | null;
+        outdoorSeating: boolean;
+        likedByVegetarians: boolean | null;
+    };
+}
