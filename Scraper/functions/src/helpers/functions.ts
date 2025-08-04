@@ -1,3 +1,6 @@
+import { IRestaurantPayload } from "./interfaces";
+import { ResponseSchemaType } from "./types";
+
 export function cleanPhoneNumber(phoneNumber: string) {
     if (phoneNumber) {
         return phoneNumber.replace(/[\s-]/g, "");
@@ -155,4 +158,68 @@ export function buildSearchText(data: any): string {
     addLine("WiFi", data.connectivity?.wiFi);
 
     return lines.filter(Boolean).join('. ');
+}
+
+export function transformResponseToApiBody(response: ResponseSchemaType): IRestaurantPayload {
+    const openHours: Record<string, string> = {};
+    Object.entries(response.openHours).forEach(([day, times]) => {
+        openHours[day] = times.join(", ");
+    });
+
+    return {
+        google_place_id: response.identification.googlePlaceId,
+        yelp_business_id: response.identification.yelpBusinessId,
+        name: response.coreInfo.name,
+        description: response.coreInfo.description,
+        categories: response.coreInfo.categories,
+        address: {
+            street: response.coreInfo.address.address,
+            city: response.coreInfo.address.city,
+            state: response.coreInfo.address.town,
+            zip: "",
+        },
+        menu_url: response.coreInfo.menuUrl,
+        price_level: response.coreInfo.priceLevel,
+        latitude: response.location.latitude,
+        longitude: response.location.longitude,
+        review_summary: response.summary.reviewSummary,
+        international_phone_number: response.contact.internationalPhoneNumber,
+        website_uri: response.contact.websiteUri,
+        email: response.contact.email,
+        google_maps_uri: response.contact.googleMapsUri,
+        media: {
+            images: response.media
+        },
+        open_hours: openHours,
+        payments: {
+            visa: response.payments.acceptsCreditCards || false,
+            mastercard: response.payments.acceptsDebitCards || false,
+            cash: response.payments.acceptsCashOnly || false
+        },
+        parking: {
+            valet: response.parking.paidParkingLot || false,
+            street: response.parking.freeParkingLot || false
+        },
+        accessibility: {
+            wheelchair: response.accessibility.wheelchairAccessibleEntrance || false
+        },
+        services: {
+            delivery: true,
+            takeout: true
+        },
+        food_drink_meals: {
+            lunch: response.foodDrinkMeals.servesLunch || false,
+            dinner: response.foodDrinkMeals.servesDinner || false
+        },
+        ambience: {
+            romantic: response.ambience.ambience?.includes("romantic") || false,
+            family_friendly: response.ambience.ambience?.includes("family_friendly") || false
+        },
+        special_features: {
+            live_music: response.ambience.liveMusic || false
+        },
+        connectivity: {
+            wifi: response.connectivity.wiFi?.toLowerCase() === "free"
+        }
+    };
 }

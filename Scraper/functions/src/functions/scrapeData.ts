@@ -7,35 +7,33 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions/v2";
 
 export const ScrapeData = onSchedule({ schedule: "*/5 * * * *", timeoutSeconds: 540 }, async (_) => {
+    try {
+        const googleServices = new GoogleService();
+        const yelpServices = new YelpService();
+        const queryManager = new QueryManager();
 
-    const googleServices = new GoogleService();
-    const yelpServices = new YelpService();
-    const queryManager = new QueryManager();
+        const queries = await queryManager.getQueries();
+        const unfetchedQueries = queries.filter((data: any) => !data?.fetched).slice(0, 15);
 
-    const queries = await queryManager.getQueries();
-    const unfetchedQueries = queries.filter((data: any) => !data?.fetched).slice(0, 15);
+        for (const data of unfetchedQueries) {
 
-    for (const data of unfetchedQueries) {
+            const query = data?.query;
 
-        const query = data?.query;
+            const googleDataSet = await googleServices.getNearbyRestaurants(query);
 
-        const googleDataSet = await googleServices.getNearbyRestaurants(query);
+            for (const googleData of googleDataSet) {
+                const locality = googleData?.addressComponents?.city;
+                const name = googleData?.name;
 
-        for (const googleData of googleDataSet) {
-            const locality = googleData?.addressComponents?.city;
-            const name = googleData?.name;
+                const yelpData = await yelpServices.searchForRestaurant(locality, name);
 
-            const yelpData = await yelpServices.searchForRestaurant(locality, name);
+                const scraperManager = new ScraperManager(googleData?.id);
 
-            const scraperManager = new ScraperManager(googleData?.id);
-
-            await scraperManager.addData(query, new Date(), cleanObject(googleData), cleanObject(yelpData));
-
-            try {
+                await scraperManager.addData(query, new Date(), cleanObject(googleData), cleanObject(yelpData));
                 await queryManager.updateFetched(query);
-            } catch (err) {
-                logger.error("queryManager updateFetched failed:", err instanceof Error ? { message: err.message, stack: err.stack } : err);
             }
         }
+    } catch (err) {
+        logger.error("queryManager updateFetched failed:", err instanceof Error ? { message: err.message, stack: err.stack } : err);
     }
 });

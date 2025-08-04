@@ -2,7 +2,6 @@ import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { LangchainService } from "../services/langchain-service";
 import { ISystemPromptInstructions } from "../helpers/interfaces";
-import { RecommendationResponse } from "../llm/schema/recommendation-schema";
 
 export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req, res) => {
 
@@ -35,9 +34,6 @@ export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req,
     res.setHeader("X-Accel-Buffering", "no");
 
     try {
-        console.log("Session " + sessionId);
-        console.log("Prompt " + prompt);
-
         const systemPromptInstructions: ISystemPromptInstructions = {
             medicalLens, tone, detailLevel, careApproach, spirituality
         }
@@ -48,16 +44,13 @@ export const getRecommendations = onRequest({ timeoutSeconds: 360 }, async (req,
         const serviceResponse = await langchainService.getResponse(date, sessionId, prompt, systemPromptInstructions);
 
         if (typeof serviceResponse === 'object' && serviceResponse !== null && Symbol.asyncIterator in serviceResponse) {
-            const asyncIterator = serviceResponse as AsyncIterable<Partial<RecommendationResponse>>;
-
-            for await (const chunk of asyncIterator) {
-                res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+            for await (const chunk of serviceResponse) {
+                res.write(`data: ${JSON.stringify(chunk.content)}\n\n`);
             }
 
             res.end();
         } else {
-            const finalResult = serviceResponse as RecommendationResponse;
-            res.write(`data: ${JSON.stringify(finalResult)}\n\n`);
+            res.write(`data: ${JSON.stringify(serviceResponse)}\n\n`);
             res.end();
         }
 

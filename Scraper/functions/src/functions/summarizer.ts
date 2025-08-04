@@ -6,6 +6,8 @@ import { ChatCompletionMessageParam } from "openai/resources.mjs";
 import { ReservatoManager } from "../managers/reservato-manager";
 import { encode } from "../helpers/encryption";
 import { PineconeService } from '../services/pinecone-service';
+import { ApiService } from '../services/api-service';
+import { transformResponseToApiBody } from '../helpers/functions';
 
 export const Summarizer = firestore.onDocumentCreated("scraper/{docId}", async (event) => {
 
@@ -39,8 +41,12 @@ export const Summarizer = firestore.onDocumentCreated("scraper/{docId}", async (
         const encryptedId = encode(googleData?.id);
 
         const pineconeService = new PineconeService();
+        const apiService = new ApiService();
 
+        const transformedData = transformResponseToApiBody(restaurantData);
+        
         await pineconeService.upsert(restaurantData);
+        await apiService.createRestaurant(transformedData);
 
         if (restaurantData?.contact?.email) {
             await mailListManager.add(googleData?.id, restaurantData?.contact?.email, googleData?.name, `https://claim.reservato.ai/claim/${encryptedId}`, 'RESTAURANT')

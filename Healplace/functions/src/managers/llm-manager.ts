@@ -1,4 +1,3 @@
-import { recommendationSchema } from '../llm/schema/recommendation-schema';
 import { ChatMistralAI } from "@langchain/mistralai";
 
 export class LlmManager {
@@ -14,6 +13,6 @@ export class LlmManager {
     }
 
     async getRecommendationModel() {
-        return this.client.withStructuredOutput(recommendationSchema, { method: "json_mode" });
+        return this.client;
     }
 }

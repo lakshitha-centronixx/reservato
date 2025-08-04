@@ -84,17 +84,13 @@ export class LangchainService {
 
             if (!(Symbol.asyncIterator in processStream)) {
                 console.error("CRITICAL ERROR: processStream is not an AsyncIterable!");
-                return {
-                    text: "An error occurred while getting recommendations"
-                };
+                return "An error occurred while getting help";
             }
 
             return processStream;
         } catch (error) {
             console.error("Error getting LLM response:", error);
-            return {
-                text: "An error occurred while getting recommendations"
-            };
+            return "An error occurred while getting help";
         }
     }
 }
