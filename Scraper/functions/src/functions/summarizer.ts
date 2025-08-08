@@ -44,14 +44,16 @@ export const Summarizer = firestore.onDocumentCreated("scraper/{docId}", async (
         const apiService = new ApiService();
 
         const transformedData = transformResponseToApiBody(restaurantData);
-        
+
         await pineconeService.upsert(restaurantData);
         await apiService.createRestaurant(transformedData);
 
         if (restaurantData?.contact?.email) {
-            await mailListManager.add(googleData?.id, restaurantData?.contact?.email, googleData?.name, `https://claim.reservato.ai/claim/${encryptedId}`, 'RESTAURANT')
+            await mailListManager.add(googleData?.id, restaurantData?.contact?.email, googleData?.name, `${process.env.WEB_BASE_URL}/claim/${encryptedId}`, 'RESTAURANT');
         } else {
-            await mailListManager.add(googleData?.id, "lakshithacentronixx@gmail.com", googleData?.name, `https://claim.reservato.ai/claim/${encryptedId}`, 'ADMIN')
+            await mailListManager.add(googleData?.id, "risindu@reservato.ai", googleData?.name, `${process.env.WEB_BASE_URL}/update/${encryptedId}`, 'ADMIN');
+            await mailListManager.add(googleData?.id, "rozainshaiqua@gmail.com", googleData?.name, `${process.env.WEB_BASE_URL}/update/${encryptedId}`, 'ADMIN');
+            await mailListManager.add(googleData?.id, "mubeen@reservato.ai", googleData?.name, `${process.env.WEB_BASE_URL}/update/${encryptedId}`, 'ADMIN');
         }
     }
 });

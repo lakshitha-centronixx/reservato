@@ -35,7 +35,7 @@ export const getRecommendations = onRequest(({ timeoutSeconds: 480 }), async (re
 
     try {
         let langchainService = new LangchainService();
-        let serviceResponse = await langchainService.getResponse(date, sessionId, prompt);
+        let serviceResponse = await langchainService.getResponse(date, sessionId, prompt, location);
 
         if (typeof serviceResponse === 'object' && serviceResponse !== null && Symbol.asyncIterator in serviceResponse) {
             const asyncIterator = serviceResponse as AsyncIterable<Partial<RecommendationResponse>>;
@@ -43,7 +43,7 @@ export const getRecommendations = onRequest(({ timeoutSeconds: 480 }), async (re
             for await (const chunk of asyncIterator) {
                 res.write(`data: ${JSON.stringify(chunk)}\n\n`);
             }
-            
+
             res.end();
         } else {
             const finalResult = serviceResponse as RecommendationResponse;

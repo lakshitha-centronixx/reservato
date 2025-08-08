@@ -10,7 +10,7 @@ import { Document } from 'langchain/document';
 import { formatResponseToString } from '../helpers/format-response';
 
 export class LangchainService {
-    async getResponse(date: string, sessionId: string, query: string) {
+    async getResponse(date: string, sessionId: string, query: string, location: string) {
         const llmManager = new LlmManager();
         const pineconeManager = new PineconeManager();
         const embeddingsManager = new EmbeddingsManager();
@@ -27,7 +27,7 @@ export class LangchainService {
             rag_docs: ragRetriever,
         });
 
-        const systemPromptContent = getRecommendationSystemPrompt();
+        const systemPromptContent = getRecommendationSystemPrompt(location);
 
         console.log("System instructions: " + systemPromptContent);
 
